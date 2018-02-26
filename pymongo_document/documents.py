@@ -155,8 +155,8 @@ class Docs(object):
 
         Docs.installed[doc_class.manager.collection_name] = doc_class
         # Call create_index
-        map(lambda (k, o): doc_class.manager._create_index(k, o), indices)
-        map(lambda (c, f): doc_class.manager._add_delete_trigger(c, f), references)
+        map(lambda k, o: (doc_class.manager._create_index(k, o), indices))
+        map(lambda c, f: (doc_class.manager._add_delete_trigger(c, f), references))
 
     @classmethod
     def factory(cls, collection_name, object_id=None):
@@ -646,7 +646,7 @@ def _field_specs(clazz):
         return {key: fs for key, fs in clz.__dict__.items() if isinstance(fs, FieldSpec)}
     mro = inspect.getmro(clazz)
     fields = reduce(lambda x, y: dict(x.items() + is_field_spec(y).items()), reversed(mro), {})
-    doc_key_map = dict(map(lambda (x, f): (f.key or x, x), fields.items()))
+    doc_key_map = dict(map(lambda x, f: (f.key or x, x), fields.items()))
     return fields, doc_key_map
 
 
@@ -681,14 +681,14 @@ class _FieldSpecAware(object):
         return self
 
     def validate(self):
-        map(lambda (k, fs): fs.validate(self.dox.get(k, fs.default), k), self.fields.items())
+        map(lambda k, fs: fs.validate(self.dox.get(k, fs.default), k), self.fields.items())
 
     def document(self):
         """
         Reverse of inflate
         :return:
         """
-        write_fields = filter(lambda (k, f): False == f.transient, self.fields.items())
+        write_fields = filter(lambda k, f: False == f.transient, self.fields.items())
         def proc(key, f):
             value = f.to_document(self.dox.get(key, f.default))
             if value is None and f.omit_if_none:
