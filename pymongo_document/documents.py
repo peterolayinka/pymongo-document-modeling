@@ -1,8 +1,8 @@
 from bson import ObjectId
-from conf import get_connection
-from errors import DeveloperFault, DocumentValidationError, FieldValidationError
+from .conf import get_connection
+from .errors import DeveloperFault, DocumentValidationError, FieldValidationError
 from pymongo.cursor import Cursor
-import helpers as helper
+import .helpers as helper
 import gettext as _
 import datetime, time
 import inspect
@@ -72,7 +72,7 @@ class Docs(object):
         cond = {} if cond is None else cond
         on_delete = self._on_delete[self.db_name] if self.db_name in self._on_delete else []
         if verbose:
-            print 'Deleting "%s": %s' % (self.db_name, cond)
+            print(f'Deleting "{self.db_name}": {cond}')
 
         # If there are listeners
         if len(on_delete) > 0:
@@ -98,7 +98,7 @@ class Docs(object):
             raise DeveloperFault('update cannot be none')
         verbose = kwargs.pop('verbose', False)
         if verbose:
-            print 'Updating "%s": %s' % (self.db_name, cond)
+            print(f'Updating "{self.db_name}": {cond}')
         self.o.update_many(cond, update, upsert=False)
 
     def find(self, *args, **kwargs):
@@ -643,10 +643,10 @@ class FieldNested(FieldSpec):
 # Building FieldSpec index from its parent classes, including itself
 def _field_specs(clazz):
     def is_field_spec(clz):
-        return {key: fs for key, fs in clz.__dict__.iteritems() if isinstance(fs, FieldSpec)}
+        return {key: fs for key, fs in clz.__dict__.items() if isinstance(fs, FieldSpec)}
     mro = inspect.getmro(clazz)
     fields = reduce(lambda x, y: dict(x.items() + is_field_spec(y).items()), reversed(mro), {})
-    doc_key_map = dict(map(lambda (x, f): (f.key or x, x), fields.iteritems()))
+    doc_key_map = dict(map(lambda (x, f): (f.key or x, x), fields.items()))
     return fields, doc_key_map
 
 
@@ -681,14 +681,14 @@ class _FieldSpecAware(object):
         return self
 
     def validate(self):
-        map(lambda (k, fs): fs.validate(self.dox.get(k, fs.default), k), self.fields.iteritems())
+        map(lambda (k, fs): fs.validate(self.dox.get(k, fs.default), k), self.fields.items())
 
     def document(self):
         """
         Reverse of inflate
         :return:
         """
-        write_fields = filter(lambda (k, f): False == f.transient, self.fields.iteritems())
+        write_fields = filter(lambda (k, f): False == f.transient, self.fields.items())
         def proc(key, f):
             value = f.to_document(self.dox.get(key, f.default))
             if value is None and f.omit_if_none:
@@ -720,7 +720,7 @@ class _FieldSpecAware(object):
                     if error_policy == 'raise':
                         raise ValueError('%s is not FieldSpec' % document_key)
                     else:
-                        print "\t'%s' is not FieldSpec and ignored" % document_key
+                        print("\t'%s' is not FieldSpec and ignored" % document_key)
                         return
                 key = self.doc_key_map[document_key]
                 fs = self.field_spec(key)
@@ -730,10 +730,10 @@ class _FieldSpecAware(object):
                         self.dox[key] = fs.from_document(value)
                         return
 
-            map(lambda (k, v): bypass(k, v), raw_document.iteritems())
+            map(lambda (k, v): bypass(k, v), raw_document.items())
 
     def serialized(self):
-        return dict(map(lambda (k, f): (f.key or k, f.to_serialized(self.dox.get(k, f.default))), self.fields.iteritems()))
+        return dict(map(lambda (k, f): (f.key or k, f.to_serialized(self.dox.get(k, f.default))), self.fields.items()))
 
     def deserialized(self, serialized):
         """
@@ -750,8 +750,8 @@ class _FieldSpecAware(object):
                         raise ValueError("Key %s is supplied, and is required field, but value is none" % document_key)
                     self.__setattr__(key, fs.from_serialized(value or fs.default))
                 else:
-                    print "%s is not FieldSpec and ignored by deserialized" % key
-            map(lambda (k, v): deserialized(k, v), serialized.iteritems())
+                    print("%s is not FieldSpec and ignored by deserialized" % key)
+            map(lambda (k, v): deserialized(k, v), serialized.items())
 
 
 class _FieldSpecAwareMetaClass(type):
@@ -781,10 +781,10 @@ class _FieldSpecAwareMetaClass(type):
             #                   write=meta.pop('permission_write', default),
             #                   delete=meta.pop('permission_delete', default))
 
-            print "FieldSpecAware \"%s\" is created and discoverable via \"%s\"" % (clsname, collection_name)
+            print("FieldSpecAware \"%s\" is created and discoverable via \"%s\"" % (clsname, collection_name))
         else:
             clx = super(_FieldSpecAwareMetaClass, cls).__new__(cls, clsname, bases, dct)
-            print "FieldSpecAware \"%s\" is created." % clsname
+            print ("FieldSpecAware \"%s\" is created." % clsname)
         return clx
 
 

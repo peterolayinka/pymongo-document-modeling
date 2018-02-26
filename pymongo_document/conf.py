@@ -1,7 +1,7 @@
 import os
 import configparser
 import pymongo
-from errors import DeveloperFault
+from .errors import DeveloperFault
 
 
 # default config - will be override by settings module
@@ -22,7 +22,7 @@ def update_config(config_path):
     elif os.path.isdir(config_path):
         path = os.path.join(config_path, 'pymongo-connectors.ini')
     else:
-        raise DeveloperFault('Unknown config_path=%s' % config_path)
+        raise DeveloperFault(f'Unknown config_path={config_path}')
 
     if os.path.isfile(path):
         config = configparser.ConfigParser()
@@ -32,12 +32,12 @@ def update_config(config_path):
         def validate_configuration(pair):
             name, conf = pair
             if 'connection_string' not in conf:
-                raise DeveloperFault('Bad configuration: "connection_string" is missing from "%s" connection.' % name)
+                raise DeveloperFault(f'Bad configuration: "connection_string" is missing from {name} connection.')
 
         if 'default' not in config:
             raise DeveloperFault('Bad configuration: "default" connection is required.')
 
-        map(validate_configuration, filter(lambda o: o[0] != 'DEFAULT', config.iteritems()))
+        map(validate_configuration, filter(lambda o: o[0] != 'DEFAULT', config.items()))
 
         Configuration.CONF = config
 
@@ -45,7 +45,7 @@ def update_config(config_path):
 # internal connector method.
 def get_connection(connection_name='default'):
     if connection_name not in Configuration.CONF:
-        raise DeveloperFault('Unknown connection_name: "%s"' % connection_name)
+        raise DeveloperFault(f'Unknown connection_name: "{connection_name}"')
 
     cnf = Configuration.CONF[connection_name]
     database_name = cnf['database_name'] if 'database_name' in cnf else 'default_database'
