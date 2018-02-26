@@ -694,7 +694,7 @@ class _FieldSpecAware(object):
             if value is None and f.omit_if_none:
                 return "omitted", value
             return f.key or key, value
-        o = dict(map(lambda (k, f): proc(k, f), write_fields))
+        o = dict(map(lambda k, f: proc(k, f), write_fields))
         if "omitted" in o:
             del o["omitted"]
         return o
@@ -730,10 +730,10 @@ class _FieldSpecAware(object):
                         self.dox[key] = fs.from_document(value)
                         return
 
-            map(lambda (k, v): bypass(k, v), raw_document.items())
+            map(lambda k, v: bypass(k, v), raw_document.items())
 
     def serialized(self):
-        return dict(map(lambda (k, f): (f.key or k, f.to_serialized(self.dox.get(k, f.default))), self.fields.items()))
+        return dict(map(lambda k, f: (f.key or k, f.to_serialized(self.dox.get(k, f.default))), self.fields.items()))
 
     def deserialized(self, serialized):
         """
@@ -751,7 +751,7 @@ class _FieldSpecAware(object):
                     self.__setattr__(key, fs.from_serialized(value or fs.default))
                 else:
                     print("%s is not FieldSpec and ignored by deserialized" % key)
-            map(lambda (k, v): deserialized(k, v), serialized.items())
+            map(lambda k, v: deserialized(k, v), serialized.items())
 
 
 class _FieldSpecAwareMetaClass(type):
