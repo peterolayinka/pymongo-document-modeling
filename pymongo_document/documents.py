@@ -2,7 +2,7 @@ from bson import ObjectId
 from .conf import get_connection
 from .errors import DeveloperFault, DocumentValidationError, FieldValidationError
 from pymongo.cursor import Cursor
-import helpers as helper
+from . import helpers as helper
 import gettext as _
 import datetime, time
 import inspect
